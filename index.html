@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Маска или Диагноз? Тест на определение нарциссизма</title>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-color: #6366f1;
+      --accent-hover: #4f46e5;
+      --border-color: #334155;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid var(--border-color);
+      position: relative;
+    }
+
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+
+    .admin-badge {
+      background: #f43f5e;
+      color: white;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .nav-btn {
+      padding: 8px 16px;
+      background: #334155;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .nav-btn.active {
+      background: var(--accent-color);
+    }
+
+    h1 {
+      text-align: center;
+      color: #f43f5e;
+      margin-top: 0;
+      font-size: 1.8rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+    }
+
+    .auth-box {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .google-btn {
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1rem;
+      transition: transform 0.1s ease;
+    }
+
+    .google-btn:active {
+      transform: scale(0.98);
+    }
+
+    .test-selector-container {
+      text-align: center;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 8px;
+      border: 1px dashed var(--border-color);
+    }
+
+    .test-selector-container select {
+      padding: 12px;
+      border-radius: 8px;
+      background: #0f172a;
+      color: white;
+      border: 1px solid var(--accent-color);
+      font-size: 1rem;
+      width: 100%;
+      max-width: 500px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .question-card {
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .question-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin-bottom: 12px;
+    }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .option:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .option input {
+      margin-right: 12px;
+      margin-top: 3px;
+      accent-color: var(--accent-color);
+    }
+
+    button.submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button.submit-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .chart-container {
+      position: relative;
+      margin: 20px 0;
+      height: 350px;
+    }
+
+    .info-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      min-height: 80px;
+    }
+
+    .info-title {
+      font-weight: bold;
+      color: #f43f5e;
+      margin-bottom: 5px;
+    }
+
+    .overall-risk {
+      background: #090d16;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--accent-color);
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 0.9rem;
+    }
+
+    .admin-table th, .admin-table td {
+      padding: 12px 10px;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .admin-table th {
+      background: #334155;
+    }
+
+    .admin-table tr:hover {
+      background: rgba(255,255,255,0.05);
+      cursor: pointer;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-bar" id="header-bar" style="display: none;">
+    <div class="user-info">
+      <img id="user-avatar" class="user-avatar" src="" alt="Avatar">
+      <span id="user-name"></span>
+      <span id="admin-badge" class="admin-badge" style="display: none;">АДМИН</span>
+    </div>
+    <button onclick="logout()" style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 5px 10px; border-radius: 6px; cursor: pointer;">Выйти</button>
+  </div>
+
+  <div class="nav-tabs" id="nav-tabs" style="display: none;">
+    <button class="nav-btn active" id="tab-btn-test" onclick="switchTab('test')">Пройти тест</button>
+    <button class="nav-btn" id="tab-btn-admin" onclick="switchTab('admin')">Результаты пользователей</button>
+  </div>
+
+  <!-- Секция 1: Вход -->
+  <div id="auth-section" class="section active">
+    <h1>🎭 Лаборатория Диагнозов</h1>
+    <p class="subtitle">Узнай, кто испортил тебе жизнь (или кому её портишь ты)</p>
+    <div class="auth-box">
+      <p style="margin-bottom: 20px; color: #94a3b8;">Для прохождения теста войдите через Google аккаунт</p>
+      <button class="google-btn" onclick="loginWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.74-.06-1.28-.19-1.84H9v3.34h4.96c-.1.83-.64 2.08-1.84 2.92l2.84 2.2c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.84-2.2c-.76.53-1.78.9-3.12.9-2.38 0-4.41-1.57-5.13-3.72L.97 13.01C2.45 15.96 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.87 10.8c-.18-.53-.28-1.1-.28-1.8s.1-1.27.28-1.8L.97 4.99C.35 6.22 0 7.57 0 9s.35 2.78.97 4.01l2.9-2.21z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.45 2.04.97 4.99l2.9 2.21C4.59 5.05 6.62 3.58 9 3.58z"/></svg>
+        Войти через Google
+      </button>
+    </div>
+  </div>
+
+  <!-- Секция 2: Тест -->
+  <div id="test-section" class="section">
+    <div class="test-selector-container">
+      <label style="display:block; margin-bottom: 8px; color: #94a3b8; font-size: 0.9rem;">Выберите тему для анализа:</label>
+      <select id="test-selector" onchange="renderSelectedTest()"></select>
+    </div>
+    <h1 id="test-title">🎭 Вопросы теста</h1>
+    <p class="subtitle" id="test-subtitle"></p>
+    <form id="quiz-form">
+      <div id="questions-container"></div>
+      <button type="button" class="submit-btn" onclick="calculateAndSaveResults()">Поставить диагноз и сохранить</button>
+    </form>
+  </div>
+
+  <!-- Секция 3: Результат -->
+  <div id="results-section" class="section">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h1 style="margin: 0;">📊 Диагноз поставлен</h1>
+      <button id="back-to-admin-btn" onclick="switchTab('admin')" style="display:none; background:#334155; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">← В админку</button>
+    </div>
+    <p id="viewing-user-name" style="color: #6366f1; font-weight: bold; margin-top: 10px;"></p>
+    <div class="overall-risk" id="overall-risk-box"></div>
+    <h3>Ваш уникальный профиль:</h3>
+    <p style="text-align: center; font-size: 0.85rem; color: #94a3b8;">💡 Ткни в столбик, чтобы узнать горькую правду</p>
+    <div class="chart-container">
+      <canvas id="typeChart"></canvas>
+    </div>
+    <div class="info-box" id="details-box">
+      <div class="info-title">Расшифровка:</div>
+      <div id="info-content">Кликни на столбик графика выше, чтобы увидеть подробности.</div>
+    </div>
+    <button class="submit-btn" style="margin-top: 20px; background: #334155;" onclick="switchTab('test')">Пройти другой тест</button>
+  </div>
+
+  <!-- Секция 4: Панель Администратора -->
+  <div id="admin-section" class="section">
+    <h1>👨‍💻 Картотека пациентов</h1>
+    <p class="subtitle">Кликните по жертве, чтобы посмотреть её детальную диаграмму</p>
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Пациент</th>
+          <th>Тест</th>
+          <th>Сумма баллов</th>
+          <th>Дата</th>
+        </tr>
+      </thead>
+      <tbody id="admin-results-list"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const ADMIN_EMAIL = "evgen1285@gmail.com";
+
+  // Хранилище всех тестов
+  const allTests = {
+    test1: {
+      title: "🎭 Маска или Диагноз?",
+      subtitle: "Базовый тест на нарциссизм и психотипы",
+      questions: [
+        { q: "1. Как человек реагирует, если вы заболели, устали или просите о поддержке?", options: [{ text: "Проявляет заботу, сочувствует, помогает на деле.", type: "norm", score: 0 }, { text: "Раздражается, говорит «вечно ты ноешь», переводит тему на свои трудности.", type: "grandiose", score: 1 }, { text: "Говорит: «Давай без эмоций и соплей, давай трезво и логически разберем проблему».", type: "cerebral", score: 1 }] },
+        { q: "2. Что происходит, когда вы делитесь своими успехами или радостными новостями?", options: [{ text: "Искренне радуется за вас и поддерживает.", type: "norm", score: 0 }, { text: "Обесценивает («Тебе просто повезло») или перебивает рассказами о себе.", type: "grandiose", score: 1 }, { text: "Начинает вести себя отстраненно, обиженно или критиковать вас в деталях.", type: "covert", score: 1 }] },
+        { q: "3. Как человек воспринимает замечания или указание на его ошибки?", options: [{ text: "Спокойно обсуждается, способен признать вину и извиниться.", type: "norm", score: 0 }, { text: "Впадает в ярость, взрывается или жестко атаковывает в ответ.", type: "malignant", score: 1 }, { text: "Уходит в «ледяное игнорирование» и играет роль глубоко обиженного.", type: "covert", score: 1 }] },
+        { q: "4. Если между вами произошел конфликт, кто в итоге оказывается виноват?", options: [{ text: "Вы ищете компромисс и делите ответственность поровну.", type: "norm", score: 0 }, { text: "Всегда вы: «Ты сама меня довела!».", type: "malignant", score: 1 }, { text: "Виноват внешний мир: начальник, прошлые партнеры, нечестные друзья.", type: "covert", score: 1 }] },
+        { q: "5. Насколько различается поведение человека на публике и дома?", options: [{ text: "Ведет себя примерно одинаково — без масок и шоу.", type: "norm", score: 0 }, { text: "На людях — идеальный спасатель, а дома — холодный тиран.", type: "saint", score: 1 }, { text: "На публике обожает производить фурор, блистать и ловить восхищение.", type: "grandiose", score: 1 }] },
+        { q: "6. На чем сфокусирована его постоянная гордость и самопрезентация?", options: [{ text: "На ценностях, совместных делах и реальных человеческих отношениях.", type: "norm", score: 0 }, { text: "На интеллекте, эрудиции и том, какие вокруг «все глупые».", type: "cerebral", score: 1 }, { text: "На теле, диетах, гардеробе, статусе и дорогой атрибутике.", type: "somatic", score: 1 }] },
+        { q: "7. Как человек относится к вашим личным границам, хобби и друзьям?", options: [{ text: "Уважает личное пространство и дает вам свободно дышать.", type: "norm", score: 0 }, { text: "Постепенно изолирует вас от близких, контролирует звонки или финансы.", type: "malignant", score: 1 }, { text: "Постоянно внушает, что ваши друзья — плохие люди.", type: "covert", score: 1 }] },
+        { q: "8. Как проявляется отношение человека к верности и вниманию на стороне?", options: [{ text: "Уважает договорённости в паре.", type: "norm", score: 0 }, { text: "Открыто флиртует, доказывает свою привлекательность.", type: "somatic", score: 1 }, { text: "На публику читает морали о верности, но скрыто может изменять.", type: "saint", score: 1 }] },
+        { q: "9. Как этот человек оценивает вашу внешность, вес или стиль?", options: [{ text: "Принимает вас и делает искренние комплименты.", type: "norm", score: 0 }, { text: "Регулярно указывает на недостатки: «Тебе надо в зал».", type: "somatic", score: 1 }, { text: "Считает, что вы недостаточно хороши для него статусно.", type: "grandiose", score: 1 }] },
+        { q: "10. Какое базовое эмоциональное состояние вы испытываете рядом с ним?", options: [{ text: "Спокойствие, безопасность, уверенность в себе.", type: "norm", score: 0 }, { text: "Постоянное ощущение «ходить по цыпочкам» и тревожный страх.", type: "malignant", score: 1 }, { text: "Хроническое чувство вины, стыда и постоянное желание его «спасти».", type: "covert", score: 1 }] },
+        { q: "11. Как изменилась ваша самооценка за время общения?", options: [{ text: "Вы развиваетесь, чувствуете прилив сил и поддержку.", type: "norm", score: 0 }, { text: "Вы стали чувствовать себя глупым и боитесь открыть рот.", type: "cerebral", score: 1 }, { text: "Вы чувствуете себя истощенным и живете только его запросами.", type: "grandiose", score: 1 }] },
+        { q: "12. Способен ли этот человек на искреннее глубокое раскаяние?", options: [{ text: "Да, искренне сожалеет и меняет поведение.", type: "norm", score: 0 }, { text: "Извиняется только формально: «Ну ладно, прости, хватит дуться».", type: "grandiose", score: 1 }, { text: "Никогда не извиняется — извинений вы не дождетесь.", type: "malignant", score: 1 }] },
+        { q: "13. Если человек помогает другим людям, как он об этом говорит?", options: [{ text: "Помогает молча и без ожидания од в свой адрес.", type: "norm", score: 0 }, { text: "Требует вечной благодарности: «Я для них всё, а они...»", type: "saint", score: 1 }, { text: "Делает это ради красивых фото в соцсетях и лайков.", type: "saint", score: 1 }] },
+        { q: "14. Как развивались ваши отношения на начальном этапе?", options: [{ text: "Постепенно и естественным путем, без спешки.", type: "norm", score: 0 }, { text: "Бурный роман, «любовная бомбардировка», красивое шоу.", type: "grandiose", score: 1 }, { text: "Вам сразу рассказывали, какой он несчастный и как его предавали.", type: "covert", score: 1 }] },
+        { q: "15. Что происходит, если вы пытаетесь отстоять свою независимость?", options: [{ text: "Конструктивный диалог и поиск компромисса.", type: "norm", score: 0 }, { text: "Начинается террор, давление, угрозы испортить репутацию.", type: "malignant", score: 1 }, { text: "На вас выливается тонна сарказма и высмеивания ваших убеждений.", type: "cerebral", score: 1 }] }
+      ],
+      typeDetails: {
+        grandiose: { title: "👑 Грандиозный нарцисс", text: "<b>Суть:</b> Нужна публика и восхищение. Вы — лишь аксессуар." },
+        covert: { title: "🥺 Скрытый (Уязвимый) нарцисс", text: "<b>Суть:</b> Давит на жалость и изображает жертву." },
+        malignant: { title: "☠️ Злокачественный нарцисс", text: "<b>Суть:</b> Строит отношения на контроле, страхе и садизме. Бегите." },
+        somatic: { title: "🪞 Соматический нарцисс", text: "<b>Суть:</b> Одержим внешностью, спортом и подпиткой эго через флирт." },
+        cerebral: { title: "🧠 Церебральный нарцисс", text: "<b>Суть:</b> Использует интеллект как оружие обесценивания." },
+        saint: { title: "😇 Святой нарцисс", text: "<b>Суть:</b> Ангел на публике, холодный тиран дома." }
+      }
+    },
+
+    test2: {
+      title: "🧩 Трагедия нарциссизма (К. Логинов)",
+      subtitle: "Проверка на зависимость от чужих оценок и побег от стыда",
+      questions: [
+        { q: "1. Как вы воспринимаете себя в отрыве от мнения окружающих?", options: [{ text: "Адекватно, я знаю кто я.", type: "norm", score: 0 }, { text: "Я постоянно чувствую, что я 'недостаточно' хорош, и должен больше.", type: "narcissist", score: 1 }] },
+        { q: "2. Насколько вы зависимы от одобрения других?", options: [{ text: "Могу обойтись и без него.", type: "norm", score: 0 }, { text: "Максимально. Иду только туда, где чувствую свою значимость.", type: "narcissist", score: 1 }] },
+        { q: "3. Получаете ли вы удовольствие от самого процесса жизни (например, в отношениях/сексе)?", options: [{ text: "Да, наслаждаюсь моментом.", type: "norm", score: 0 }, { text: "Нет, я получаю удовольствие только от того, как меня оценивают в процессе.", type: "narcissist", score: 1 }] },
+        { q: "4. Что лежит в основе вашей созависимости?", options: [{ text: "Взаимная привязанность.", type: "norm", score: 0 }, { text: "Потребность использовать партнера для подтверждения своей уникальности.", type: "narcissist", score: 1 }] },
+        { q: "5. Замечаете ли вы, как предаете себя ради одобрения?", options: [{ text: "Нет, я стараюсь быть честным с собой.", type: "norm", score: 0 }, { text: "Часто предаю себя, даже не замечая этого.", type: "narcissist", score: 1 }] },
+        { q: "6. Существуют ли «абсолютно нормальные» люди?", options: [{ text: "Нормальность придумана, у всех свои особенности.", type: "norm", score: 0 }, { text: "Конечно, это я. А вокруг одни дураки.", type: "narcissist", score: 1 }] },
+        { q: "7. Как вы реагируете, когда вас выбирают люди, которые вами восхищаются?", options: [{ text: "Мне приятно, но это не главное.", type: "norm", score: 0 }, { text: "Обожаю это, мне это жизненно необходимо для комфорта.", type: "narcissist", score: 1 }] },
+        { q: "8. Что происходит, если другие перестают подтверждать вашу ценность?", options: [{ text: "Живу дальше, опираясь на себя.", type: "norm", score: 0 }, { text: "Испытываю глубокое психическое страдание и пустоту.", type: "narcissist", score: 1 }] },
+        { q: "9. Для чего, по-вашему, нужно изучать свои «нарциссические» черты?", options: [{ text: "Чтобы лучше понимать себя и регулировать отношения с близкими.", type: "norm", score: 0 }, { text: "Мне это не нужно, со мной всё идеально.", type: "narcissist", score: 1 }] },
+        { q: "10. Какое чувство вы стараетесь избегать любой ценой?", options: [{ text: "Страх или грусть.", type: "norm", score: 0 }, { text: "Стыд. Стыд невыносим.", type: "narcissist", score: 1 }] },
+        { q: "11. Что обычно скрывается за вашей внезапной яростью?", options: [{ text: "Реальная угроза или сильная усталость.", type: "norm", score: 0 }, { text: "Моя уязвимость и паника, что меня разоблачат.", type: "narcissist", score: 1 }] },
+        { q: "12. Как на вас повлиял гиперконтроль или эмоциональная отстраненность родителей?", options: [{ text: "Я проработал это и живу своей жизнью.", type: "norm", score: 0 }, { text: "Я вырос в вечном поиске идеальной любви и подтверждения своей крутости.", type: "narcissist", score: 1 }] },
+        { q: "13. Может ли нарцисс быть тихим и скромным?", options: [{ text: "Да, это скрытый тип, истерзанный стыдом.", type: "narcissist", score: 1 }, { text: "Нет, они всегда громкие и яркие (Миф).", type: "norm", score: 0 }] },
+        { q: "14. Если вам делают комплимент, что вы чувствуете?", options: [{ text: "Благодарность.", type: "norm", score: 0 }, { text: "Облегчение. Моя маска всё ещё работает.", type: "narcissist", score: 1 }] },
+        { q: "15. Готовы ли вы признать свои слабости?", options: [{ text: "Да, я живой человек.", type: "norm", score: 0 }, { text: "Слабость — это поражение, её нельзя показывать никому.", type: "narcissist", score: 1 }] }
+      ],
+      typeDetails: {
+        narcissist: { title: "🥀 Трагедия Нарцисса", text: "<b>Суть:</b> Ты воспринимаешь себя только через оценку других. Вечный побег от стыда и ощущения себя 'недостаточным'. Сними корону, она давит на мозг." },
+        norm: { title: "🌱 Здоровый эгоизм", text: "<b>Суть:</b> Ты умеешь опираться на себя, знаешь свои косяки и не разрушаешься без чужих аплодисментов. Молодец." }
+      }
+    },
+
+    test3: {
+      title: "🔪 Нарцисс или Психопат? (Тебе не кажется)",
+      subtitle: "Кто перед вами: хрупкое эго или хладнокровный хищник?",
+      questions: [
+        { q: "1. Для чего этому человеку нужно нравиться людям?", options: [{ text: "Чтобы получить выгоду или просто ради забавы.", type: "psychopath", score: 1 }, { text: "Чтобы выпрашивать похвалу и чувствовать себя богом.", type: "narcissist", score: 1 }, { text: "Чтобы строить здоровые социальные связи.", type: "norm", score: 0 }] },
+        { q: "2. На чем базируется его уверенность в себе?", options: [{ text: "На защитном панцире от страха разоблачения.", type: "narcissist", score: 1 }, { text: "На полном отсутствии страха и невосприимчивости к эмоциям.", type: "psychopath", score: 1 }, { text: "На реальных делах и адекватной самооценке.", type: "norm", score: 0 }] },
+        { q: "3. Что он чувствует при угрозе неудачи или разоблачения?", options: [{ text: "Дикий ужас, что увидят его неидеальность.", type: "narcissist", score: 1 }, { text: "Логически просчитывает риски. Страха нет.", type: "psychopath", score: 1 }, { text: "Обычную тревогу живого человека.", type: "norm", score: 0 }] },
+        { q: "4. Как он относится к другим людям?", options: [{ text: "Как к эмоциональному ресурсу, который должен питать эго.", type: "narcissist", score: 1 }, { text: "Как к наивному, тупому мусору, не имеющему ценности.", type: "psychopath", score: 1 }, { text: "С уважением, как к равным.", type: "norm", score: 0 }] },
+        { q: "5. Привязывается ли он к своим партнерам?", options: [{ text: "Да, формирует поверхностную тревожную зависимость.", type: "narcissist", score: 1 }, { text: "Нет. Держит при себе только пока интересно играть и наказывать.", type: "psychopath", score: 1 }, { text: "Да, способен на глубокую любовь.", type: "norm", score: 0 }] },
+        { q: "6. Как он относится к собственной безопасности?", options: [{ text: "Дико боится старости и смерти, печется о себе.", type: "narcissist", score: 1 }, { text: "Склонен к дикому риску, смерть — это нормально, ему всё равно.", type: "psychopath", score: 1 }, { text: "Соблюдает адекватные меры предосторожности.", type: "norm", score: 0 }] },
+        { q: "7. Когда он поступает плохо, как он это воспринимает?", options: [{ text: "Искажает реальность, искренне веря, что он поступил хорошо.", type: "narcissist", score: 1 }, { text: "Знает, что это плохо, но ему плевать. Виноват тот, кто слабее.", type: "psychopath", score: 1 }, { text: "Испытывает вину и раскаяние.", type: "norm", score: 0 }] },
+        { q: "8. Почему он лжет?", options: [{ text: "Чтобы поддержать свой образ, причем сам начинает верить в ложь.", type: "narcissist", score: 1 }, { text: "Ради развлечения и дофамина, наблюдая за наивными людишками.", type: "psychopath", score: 1 }, { text: "Старается не лгать.", type: "norm", score: 0 }] },
+        { q: "9. Зачем ему ваши слабости и комплексы?", options: [{ text: "Чтобы возвыситься за ваш счет и показать вашу ничтожность.", type: "narcissist", score: 1 }, { text: "Чтобы получить власть, ресурсы и просто ради хищной забавы.", type: "psychopath", score: 1 }, { text: "Он не использует чужие слабости.", type: "norm", score: 0 }] },
+        { q: "10. Какие эмоции ему доступны?", options: [{ text: "У него есть спектр: депрессия, тревога, восторг (зависит от эго).", type: "narcissist", score: 1 }, { text: "Он пуст. Испытывает только скуку, гнев, презрение и азарт.", type: "psychopath", score: 1 }, { text: "Полный спектр человеческих эмоций.", type: "norm", score: 0 }] },
+        { q: "11. Как он ведет себя при общении/знакомстве?", options: [{ text: "Болтлив, много рассказывает о своих великих достижениях.", type: "narcissist", score: 1 }, { text: "Скрытен, может задавать странные неуместные вопросы, изучая вас.", type: "psychopath", score: 1 }, { text: "Слушает и говорит в равной степени.", type: "norm", score: 0 }] },
+        { q: "12. Понимает ли он чужую боль?", options: [{ text: "Ваша боль для него — доказательство его значимости.", type: "narcissist", score: 1 }, { text: "Эмпатии ноль. Боль других его развлекает или просто бесит своей 'сопливостью'.", type: "psychopath", score: 1 }, { text: "Сочувствует и старается помочь.", type: "norm", score: 0 }] },
+        { q: "13. Что толкает его на насилие?", options: [{ text: "Уязвленное самолюбие и страх оказаться ничтожеством.", type: "narcissist", score: 1 }, { text: "Презрение к слабости и экзистенциальное желание выпустить ярость.", type: "psychopath", score: 1 }, { text: "Он не применяет насилие.", type: "norm", score: 0 }] },
+        { q: "14. Склонен ли он к логике или импульсивным глупостям?", options: [{ text: "Может разрушить жизнь ради мимолетного восхищения.", type: "narcissist", score: 1 }, { text: "Логичен и расчетлив. Скроет всё, если ему это невыгодно.", type: "psychopath", score: 1 }, { text: "Обычная человеческая логика.", type: "norm", score: 0 }] },
+        { q: "15. Как происходит расставание?", options: [{ text: "Пытается вернуть вас обратно, устраивает пинги.", type: "narcissist", score: 1 }, { text: "Преследует, угрожает, делает жизнь адом. Это реально опасно.", type: "psychopath", score: 1 }, { text: "Тяжело, но экологично расходятся.", type: "norm", score: 0 }] }
+      ],
+      typeDetails: {
+        narcissist: { title: "🪞 Классический Нарцисс", text: "<b>Суть:</b> Ищет восхищения, боится разоблачения, искренне верит в собственную ложь и питается твоими эмоциями." },
+        psychopath: { title: "☠️ Психопат (Хищник)", text: "<b>Суть:</b> Эмоционально пуст, бесстрашен, рассматривает людей как мусор и ресурс для игры. Беги, меняй имя и город. Это не шутки." },
+        norm: { title: "👤 Обычный человек", text: "<b>Суть:</b> Всё ок. Эмпатичен, способен на привязанность, испытывает страх и умеет извиняться." }
+      }
+    },
+
+    // НОВЫЙ ТЕСТ: На основе интервью с церебральным нарциссом (Шуров)
+    test4: {
+      title: "🧠 Анатомия Церебрального Нарцисса (Интервью)",
+      subtitle: "Как мыслит чистый нарцисс: выживание, стратегии и правила безопасности",
+      questions: [
+        { q: "1. В чем ключевая особенность «церебрального нарцисса» по сравнению с классическими образами?", options: [{ text: "Он безумно застенчив и боится людей из-за комплексов.", type: "classic_myth", score: 0 }, { text: "Его развитый неокортекс и дофамин от превосходства/интеллекта перекрывают либидо.", type: "cerebral", score: 1 }, { text: "Он помешан исключительно на спорте и внешности.", type: "somatic", score: 0 }] },
+        { q: "2. Как нарцисс в детстве ведет себя со своими родителями или близкими?", options: [{ text: "Беспрекословно подчиняется и боится каждого слова.", type: "classic_myth", score: 0 }, { text: "Выдает инструкции, устанавливает правила и наказывает игнором или пропажей.", type: "manipulator", score: 1 }, { text: "Искренне любит и заботится о них без задней мысли.", type: "norm", score: 0 }] },
+        { q: "3. Что происходит, если вы пытаетесь ответить агрессией на агрессию нарцисса?", options: [{ text: "Он пугается, извиняется и идет к психологу.", type: "naive", score: 0 }, { text: "Он умножает эту агрессию минимум на 10 и возвращает вам в жесткой форме.", type: "predator", score: 1 }, { text: "Конфликт сразу мирно затухает.", type: "norm", score: 0 }] },
+        { q: "4. Что чувствует нарцисс после мощного скандала или слива яда («тирады»)?", options: [{ text: "Мучительные угрызения совести и слезы раскаяния.", type: "neurotic", score: 0 }, { text: "Полнейшее удовлетворение, блаженство и внутреннюю чистоту («доза дошла»).", type: "narc_gratification", score: 1 }, { text: "Физическую слабость и апатию.", type: "norm", score: 0 }] },
+        { q: "5. Испытывают ли нарциссы подлинный стыд за свои поступки в прошлом?", options: [{ text: "Да, их мучает рефлексия и бессонница годами.", type: "neurotic", score: 0 }, { text: "Нет, прошлое не маркируется как стыдное — важен лишь вопрос «попался или нет».", type: "sociopath_trait", score: 1 }, { text: "Они регулярно ходят на исповеди и каются.", type: "norm", score: 0 }] },
+        { q: "6. Какую главную фантазию вынашивает нарцисс по отношению к тому, кто задел его эго?", options: [{ text: "Подружиться и доказать свою правоту в споре.", type: "naive", score: 0 }, { text: "Полное и тотальное уничтожение (destruction), чтобы осталось пустое место.", type: "destructive", score: 1 }, { text: "Забыть об этом человеке навсегда.", type: "norm", score: 0 }] },
+        { q: "7. Какая девушка является идеальным «магнитом» для такого хищника?", options: [{ text: "Холодная стерва, которая сама всех подавляет.", type: "wrong", score: 0 }, { text: "Нейротипичная эмпатичная красавица, выросшая с матерью-нарцисской и привыкшая спасать.", type: "magnet", score: 1 }, { text: "Девушка, которая вообще не интересуется отношениями.", type: "norm", score: 0 }] },
+        { q: "8. В чем природа сексуального влечения у церебрального нарцисса?", options: [{ text: "Оно полностью отсутствует, им чужда близость.", type: "wrong", score: 0 }, { text: "Ему необходима ментальная химия, новизна и интеллектуальный отклик мозга.", type: "cerebral_sex", score: 1 }, { text: "Он выбирает исключительно по внешности тела.", type: "somatic", score: 0 }] },
+        { q: "9. Почему нарциссическое расстройство в интервью названо по сути «садистическим»?", options: [{ text: "Потому что они любят физически калечить людей на улице.", type: "wrong", score: 0 }, { text: "У них уровень агрессии психопата плюс способность понимать чужой ум, чтобы довести жертву до суицида.", type: "sadistic_trait", score: 1 }, { text: "Это просто красивый термин без почвы.", type: "norm", score: 0 }] },
+        { q: "10. Способен ли нарцисс на долгую искреннюю привязанность?", options: [{ text: "Да, если партнер во всем с ним согласен.", type: "naive", score: 0 }, { text: "Нет, система долгосрочной привязанности отсутствует — есть лишь расчет на полезность и дофамин.", type: "utilitarian", score: 1 }, { text: "Конечно, они очень верные семьянины.", type: "norm", score: 0 }] },
+        { q: "11. Почему бесполезно спорить с нарциссом, используя логику и факты?", options: [{ text: "Потому что он плохо учился в школе.", type: "joke", score: 0 }, { text: "Его когнитивная оценка не влияет на чувства, где он чувствует себя абсолютным императором.", type: "emperor_complex", score: 1 }, { text: "Он всегда готов признать поражение.", type: "norm", score: 0 }] },
+        { q: "12. Как нарциссы реагируют, когда партнер уличает их и изучает темы абьюза?", options: [{ text: "Каются и бросают свои привычки.", type: "naive", score: 0 }, { text: "Изучают теорию вдоль и поперек, чтобы манипулировать терминами и перекладывать вину на вас.", type: "manipulator_tactic", score: 1 }, { text: "Перестают пользоваться интернетом.", type: "norm", score: 0 }] },
+        { q: "13. Как доктор Шуров и герой интервью рекомендуют воспринимать нарцисса?", options: [{ text: "Как больного ребенка, которого можно перевоспитать лаской.", type: "danger", score: 0 }, { text: "Как опасную инфекцию (как ковид): делать жесткий «не контакт» и эвакуироваться.", type: "isolation", score: 1 }, { text: "Как лучшего друга для совместного бизнеса.", type: "norm", score: 0 }] },
+        { q: "14. С кем нужно решать юридические и бытовые вопросы при разрыве с ним?", options: [{ text: "Напрямую с ним в долгих и честных диалогах.", type: "danger", score: 0 }, { text: "Через адекватных людей из его окружения, юристов и специалистов, исключив личный контакт.", type: "safe_strategy", score: 1 }, { text: "Пустить всё на самотек.", type: "norm", score: 0 }] },
+        { q: "15. Какова главная иллюзия человека, попавшего под влияние такого манипулятора?", options: [{ text: "Что он сможет сделать нарцисса богатым.", type: "wrong", score: 0 }, { text: "Что нарцисс выбрал его из-за того, что с самим партнером что-то «не так» (хотя это случайность).", type: "victim_illusion", score: 1 }, { text: "Что нарцисс боится темноты.", type: "norm", score: 0 }] }
+      ],
+      typeDetails: {
+        cerebral: { title: "🧠 Церебральный хищник", text: "<b>Суть:</b> Интеллектуальный абьюзер, для которого люди — лишь пища для эго. Логика бессильна." },
+        destructive: { title: "⚠️ Зона риска / Токсичный паттерн", text: "<b>Суть:</b> Ты недооцениваешь уровень агрессии и пытаешься играть по чужим правилам. Опасно." },
+        isolation: { title: "🛡️ Стратегия спасения (No Contact)", text: "<b>Суть:</b> Единственный метод выживания — изоляция, отсутствие прямого контакта и опора на специалистов." }
+      }
+    }
+  };
+
+  let currentUser = null;
+  let chartInstance = null;
+  let currentTestKey = 'test1';
+
+  // Инициализация Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyADTLV0YpH3fGE-AXZsEv7z-bELtUU3rbk",
+    authDomain: "narcissa-7b6a3.firebaseapp.com",
+    projectId: "narcissa-7b6a3",
+    storageBucket: "narcissa-7b6a3.firebasestorage.app",
+    messagingSenderId: "643551780194",
+    appId: "1:643551780194:web:5db51b3a37222a9301a03b",
+    measurementId: "G-XM0RMYS0FJ"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Заполняем селектор тестов
+  function populateTestSelector() {
+    const selector = document.getElementById('test-selector');
+    selector.innerHTML = '';
+    for (const key in allTests) {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = allTests[key].title;
+      selector.appendChild(opt);
+    }
+  }
+
+  // Отрисовка выбранного теста
+  function renderSelectedTest() {
+    currentTestKey = document.getElementById('test-selector').value;
+    const testData = allTests[currentTestKey];
+    
+    document.getElementById('test-title').innerText = testData.title;
+    document.getElementById('test-subtitle').innerText = testData.subtitle || "";
+    
+    const container = document.getElementById('questions-container');
+    container.innerHTML = '';
+    
+    testData.questions.forEach((q, index) => {
+      const qDiv = document.createElement('div');
+      qDiv.className = 'question-card';
+      let optionsHTML = '';
+      q.options.forEach((opt, optIndex) => {
+        optionsHTML += `
+          <label class="option">
+            <input type="radio" name="q${index}" value="${opt.type || 'none'}" data-score="${opt.score}" ${optIndex === 0 ? 'checked' : ''}>
+            <span>${opt.text}</span>
+          </label>
+        `;
+      });
+      qDiv.innerHTML = `<div class="question-title">${q.q}</div>${optionsHTML}`;
+      container.appendChild(qDiv);
+    });
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      document.getElementById('header-bar').style.display = 'flex';
+      document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
+      document.getElementById('user-name').innerText = user.displayName || user.email;
+
+      if (user.email === ADMIN_EMAIL) {
+        document.getElementById('admin-badge').style.display = 'inline-block';
+        document.getElementById('nav-tabs').style.display = 'flex';
+      } else {
+        document.getElementById('admin-badge').style.display = 'none';
+        document.getElementById('nav-tabs').style.display = 'none';
+      }
+
+      populateTestSelector();
+      renderSelectedTest();
+      switchTab('test');
+    } else {
+      currentUser = null;
+      document.getElementById('header-bar').style.display = 'none';
+      document.getElementById('nav-tabs').style.display = 'none';
+      switchTab('auth');
+    }
+  });
+
+  function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(err => alert("Ошибка входа: " + err.message));
+  }
+
+  function logout() { auth.signOut(); }
+
+  function switchTab(tabName) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+    if (tabName === 'auth') document.getElementById('auth-section').classList.add('active');
+    if (tabName === 'test') {
+      document.getElementById('test-section').classList.add('active');
+      document.getElementById('tab-btn-test')?.classList.add('active');
+    }
+    if (tabName === 'results') document.getElementById('results-section').classList.add('active');
+    if (tabName === 'admin') {
+      document.getElementById('admin-section').classList.add('active');
+      document.getElementById('tab-btn-admin')?.classList.add('active');
+      loadAdminData();
+    }
+  }
+
+  async function calculateAndSaveResults() {
+    const testData = allTests[currentTestKey];
+    const scores = {};
+    Object.keys(testData.typeDetails).forEach(k => scores[k] = 0);
+    
+    let totalScore = 0;
+
+    testData.questions.forEach((_, index) => {
+      const selected = document.querySelector(`input[name="q${index}"]:checked`);
+      if (selected) {
+        const score = parseInt(selected.getAttribute('data-score'));
+        const type = selected.value;
+        totalScore += score;
+        if (type !== 'none' && scores[type] !== undefined) {
+          scores[type] += score;
+        }
+      }
+    });
+
+    const resultData = {
+      userId: currentUser.uid,
+      userName: currentUser.displayName || "Аноним",
+      userEmail: currentUser.email,
+      testId: currentTestKey,
+      totalScore: totalScore,
+      scores: scores,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+      await db.collection('test_results').add(resultData);
+      document.getElementById('viewing-user-name').innerText = "";
+      document.getElementById('back-to-admin-btn').style.display = "none";
+      showResults(totalScore, scores, currentTestKey);
+    } catch (e) {
+      alert("Ошибка сохранения, доктор: " + e.message);
+    }
+  }
+
+  function showResults(totalScore, scores, testId) {
+    switchTab('results');
+    
+    const prevKey = currentTestKey;
+    currentTestKey = testId || 'test1'; 
+    
+    const riskBox = document.getElementById('overall-risk-box');
+    
+    if (totalScore <= 4) {
+      riskBox.style.borderColor = '#22c55e';
+      riskBox.innerHTML = `<b>Баллы: ${totalScore} / 15</b><br>Всё довольно мирно. Дыши ровно.`;
+    } else if (totalScore <= 8) {
+      riskBox.style.borderColor = '#eab308';
+      riskBox.innerHTML = `<b>Баллы: ${totalScore} / 15</b><br>Тревожные звоночки звенят. Будь начеку.`;
+    } else {
+      riskBox.style.borderColor = '#f43f5e';
+      riskBox.innerHTML = `<b>Баллы: ${totalScore} / 15</b><br>Критический уровень! Беги, пока не поздно.`;
+    }
+    
+    renderChart(scores);
+    currentTestKey = prevKey; 
+  }
+
+  function getColorForScore(score) {
+    const hue = (1 - Math.min(score / 15, 1)) * 120; 
+    return `hsl(${hue}, 80%, 50%)`;
+  }
+
+  function renderChart(scores) {
+    const testData = allTests[currentTestKey];
+    const ctx = document.getElementById('typeChart').getContext('2d');
+    
+    const keys = Object.keys(testData.typeDetails);
+    const labels = keys.map(k => testData.typeDetails[k].title);
+    const dataValues = keys.map(k => scores[k] || 0);
+    const backgroundColors = dataValues.map(val => getColorForScore(val));
+
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{ data: dataValues, backgroundColor: backgroundColors, borderRadius: 6 }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: '#334155' } },
+          x: { ticks: { display: false }, grid: { display: false } }
+        },
+        onClick: (e, activeElements) => {
+          if (activeElements.length > 0) {
+            showDetails(keys[activeElements[0].index]);
+          }
+        }
+      }
+    });
+  }
+
+  function showDetails(typeKey) {
+    const testData = allTests[currentTestKey];
+    const details = testData.typeDetails[typeKey];
+    if(details) {
+      document.getElementById('details-box').querySelector('.info-title').innerText = details.title;
+      document.getElementById('info-content').innerHTML = details.text;
+    }
+  }
+
+  async function loadAdminData() {
+    const list = document.getElementById('admin-results-list');
+    list.innerHTML = '<tr><td colspan="4">Копаемся в архивах...</td></tr>';
+
+    try {
+      const snapshot = await db.collection('test_results').orderBy('timestamp', 'desc').get();
+      list.innerHTML = '';
+      if (snapshot.empty) {
+        list.innerHTML = '<tr><td colspan="4">Пациентов пока нет.</td></tr>';
+        return;
+      }
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        const dateStr = d.timestamp ? new Date(d.timestamp.toDate()).toLocaleString('ru-RU') : 'Только что';
+        const tId = d.testId || 'test1';
+        const testName = allTests[tId] ? allTests[tId].title : 'Неизвестный тест';
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${d.userName}</b><br><span style="font-size:0.75rem; color:#94a3b8">${d.userEmail}</span></td>
+          <td>${testName}</td>
+          <td><b style="color: ${d.totalScore > 8 ? '#f43f5e' : '#22c55e'}">${d.totalScore}</b></td>
+          <td>${dateStr}</td>
+        `;
+        tr.onclick = () => {
+          document.getElementById('viewing-user-name').innerText = `Дело пациента: ${d.userName}`;
+          document.getElementById('back-to-admin-btn').style.display = "block";
+          showResults(d.totalScore, d.scores, tId);
+        };
+        list.appendChild(tr);
+      });
+    } catch (e) {
+      list.innerHTML = `<tr><td colspan="4" style="color: #f43f5e;">Ошибка доступа: ${e.message}</td></tr>`;
+    }
+  }
+</script>
+
+</body>
+</html>
