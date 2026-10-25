@@ -1,0 +1,17 @@
+// Рекомендуемые правила Firestore (вкладка Firestore Database → Rules).
+// Если у вас уже есть рабочие правила и всё работает — можно не менять.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /test_results/{id} {
+      // создавать можно только результат на своё имя
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // читать: свои результаты или всё — если вы админ
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        (request.auth.token.email == "evgen1285@gmail.com" && request.auth.token.email_verified == true)
+      );
+      allow update, delete: if false;
+    }
+  }
+}

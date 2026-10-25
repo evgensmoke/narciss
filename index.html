@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ты Нарцисс! — тесты на нарциссические черты</title>
+  <meta name="description" content="Психологические тесты о нарциссизме: узнай, кто рядом с тобой — и что происходит с тобой.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Unbounded:wght@500;700&display=swap&subset=cyrillic" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body data-mood="neutral">
+  <div class="bgl bg-good"></div><div class="bgl bg-mid"></div><div class="bgl bg-bad"></div>
+
+  <header class="top" id="top">
+    <a class="logo" href="#" data-go="home">👑 Ты Нарцисс!</a>
+    <nav class="tabs" id="tabs" hidden>
+      <button class="tab" data-go="home">Тесты</button>
+      <button class="tab" data-go="mine">Мои результаты</button>
+      <button class="tab" data-go="admin" id="tab-admin" hidden>Админ</button>
+    </nav>
+    <div class="who">
+      <button class="icon-btn" id="snd" title="Звук" aria-label="Включить или выключить звук">🔊</button>
+      <div class="user" id="user" hidden>
+        <img id="avatar" alt="" width="30" height="30">
+        <span id="uname"></span>
+        <span class="badge" id="badge" hidden>админ</span>
+        <button class="ghost" id="logout">Выйти</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Вход -->
+    <section class="view" id="v-login">
+      <img class="hero-img" src="images/title.jpg" alt="Ты Нарцисс!" width="1376" height="768">
+      <div class="panel center">
+        <p class="lead" id="tagline"></p>
+        <p class="note">Результаты каждого теста сохраняются в вашем профиле: можно вернуться к ним позже и сравнить, как меняется картина.</p>
+        <button class="google" id="login">
+          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.74-.06-1.28-.19-1.84H9v3.34h4.96c-.1.83-.64 2.08-1.84 2.92l2.84 2.2c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.84-2.2c-.76.53-1.78.9-3.12.9-2.38 0-4.41-1.57-5.13-3.72L.97 13.01C2.45 15.96 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.87 10.8c-.18-.53-.28-1.1-.28-1.8s.1-1.27.28-1.8L.97 4.99C.35 6.22 0 7.57 0 9s.35 2.78.97 4.01l2.9-2.21z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.45 2.04.97 4.99l2.9 2.21C4.59 5.05 6.62 3.58 9 3.58z"/></svg>
+          Войти через Google
+        </button>
+      </div>
+    </section>
+
+    <!-- Выбор теста -->
+    <section class="view" id="v-home" hidden>
+      <h1>Выберите тест</h1>
+      <p class="sub">Отвечайте так, как есть на самом деле, а не как хотелось бы.</p>
+      <div class="grid" id="test-grid"></div>
+    </section>
+
+    <!-- Вопросы -->
+    <section class="view" id="v-quiz" hidden>
+      <div class="panel quiz">
+        <div class="quiz-head">
+          <button class="ghost" id="q-exit">← К тестам</button>
+          <span id="q-count"></span>
+        </div>
+        <div class="progress" role="progressbar" aria-label="Прогресс теста"><i id="bar"></i></div>
+        <h2 id="quiz-title" class="quiz-title"></h2>
+        <p class="q-text" id="q-text" aria-live="polite"></p>
+        <div class="opts" id="opts" role="radiogroup"></div>
+        <button class="ghost" id="q-back">← Предыдущий вопрос</button>
+      </div>
+    </section>
+
+    <!-- Результат -->
+    <section class="view" id="v-result" hidden>
+      <div class="r-bar">
+        <button class="ghost" id="r-back" hidden>← Назад к списку</button>
+        <span class="who-line" id="r-who"></span>
+      </div>
+      <div class="panel r-hero">
+        <div class="gauge-box">
+          <canvas id="gauge" aria-hidden="true"></canvas>
+          <div class="gauge-num"><b id="r-score"></b><small>баллов</small></div>
+        </div>
+        <div>
+          <p class="r-test" id="r-title"></p>
+          <h1 id="r-level"></h1>
+          <p id="r-text"></p>
+        </div>
+      </div>
+
+      <div class="panel" id="r-profile">
+        <h2>Профиль ответов</h2>
+        <div class="profile">
+          <div class="radar-box" id="radar-box"><canvas id="radar"></canvas></div>
+          <div class="meters" id="meters"></div>
+        </div>
+        <p class="hint" id="radar-hint">Нажмите на точку диаграммы или на строку, чтобы открыть описание.</p>
+      </div>
+
+      <div class="panel" id="r-details">
+        <h2>Что это значит</h2>
+        <div id="cards"></div>
+      </div>
+
+      <figure class="panel" id="r-figure" hidden>
+        <img id="r-img" alt="Шпаргалка по типам" loading="lazy">
+      </figure>
+
+      <p class="disclaimer" id="r-disc"></p>
+      <div class="actions">
+        <button class="primary" data-go="home">Пройти другой тест</button>
+        <button class="ghost" data-go="mine">Мои результаты</button>
+      </div>
+    </section>
+
+    <!-- Мои результаты -->
+    <section class="view" id="v-mine" hidden>
+      <h1>Мои результаты</h1>
+      <p class="sub">История прохождений. Нажмите на строку, чтобы открыть подробности.</p>
+      <div class="list" id="mine-list"></div>
+    </section>
+
+    <!-- Админ -->
+    <section class="view" id="v-admin" hidden>
+      <h1>Все результаты</h1>
+      <p class="sub">Прохождения всех пользователей сайта.</p>
+      <div class="filters">
+        <input type="search" id="a-search" placeholder="Поиск по имени или почте">
+        <select id="a-test" aria-label="Фильтр по тесту"></select>
+      </div>
+      <div class="list" id="admin-list"></div>
+    </section>
+  </main>
+
+  <footer><p id="foot-disc"></p></footer>
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="data/config.js"></script>
+  <script src="data/tests-list.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
