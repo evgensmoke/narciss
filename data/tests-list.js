@@ -9,5 +9,6 @@ window.TEST_FILES = [
   "test2",
   "test3",
   "test4",
-  "test5"
+  "test5",
+  "test6"
 ];
